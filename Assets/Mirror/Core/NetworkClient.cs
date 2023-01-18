@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Mirror.RemoteCalls;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Mirror
 {
@@ -100,6 +101,8 @@ namespace Mirror
         // https://mirror-networking.gitbook.io/docs/guides/gameobjects/custom-spawnfunctions
         internal static readonly Dictionary<uint, SpawnHandlerDelegate> spawnHandlers =
             new Dictionary<uint, SpawnHandlerDelegate>();
+        internal static readonly Dictionary<uint, UnityAction<NetworkIdentity>> initialHandlers =
+            new Dictionary<uint, UnityAction<NetworkIdentity>>();
         internal static readonly Dictionary<uint, UnSpawnDelegate> unspawnHandlers =
             new Dictionary<uint, UnSpawnDelegate>();
 
@@ -739,7 +742,7 @@ namespace Mirror
 
         /// <summary>Register a spawnable prefab with custom spawn/unspawn handlers.</summary>
         // TODO why do we have one with SpawnDelegate and one with SpawnHandlerDelegate?
-        public static void RegisterPrefab(GameObject prefab, SpawnHandlerDelegate spawnHandler, UnSpawnDelegate unspawnHandler)
+        public static void RegisterPrefab(GameObject prefab, SpawnHandlerDelegate spawnHandler, UnSpawnDelegate unspawnHandler, UnityAction<NetworkIdentity> initHandler = null)
         {
             if (prefab == null)
             {
@@ -800,6 +803,8 @@ namespace Mirror
 
             spawnHandlers[assetId] = spawnHandler;
             unspawnHandlers[assetId] = unspawnHandler;
+
+            if (initHandler != null) initialHandlers[assetId] = initHandler;
         }
 
         /// <summary>Removes a registered spawn prefab that was setup with NetworkClient.RegisterPrefab.</summary>
@@ -1013,6 +1018,8 @@ namespace Mirror
             identity.transform.localScale = message.scale;
             identity.isOwned = message.isOwner;
             identity.netId = message.netId;
+            identity.teamID = message.teamId;
+            identity.sessionId = 0;
 
             if (message.isLocalPlayer)
                 InternalAddPlayer(identity);
@@ -1294,9 +1301,15 @@ namespace Mirror
         internal static void OnSpawn(SpawnMessage message)
         {
             // Debug.Log($"Client spawn handler instantiating netId={msg.netId} assetID={msg.assetId} sceneId={msg.sceneId:X} pos={msg.position}");
+
             if (FindOrSpawnObject(message, out NetworkIdentity identity))
             {
                 ApplySpawnPayload(identity, message);
+
+                if (initialHandlers.TryGetValue(message.assetId, out UnityAction<NetworkIdentity> handler))
+                {
+                    handler.Invoke(identity);
+                }
             }
         }
 

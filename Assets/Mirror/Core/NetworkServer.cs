@@ -1171,6 +1171,8 @@ namespace Mirror
                     position = identity.transform.localPosition,
                     rotation = identity.transform.localRotation,
                     scale = identity.transform.localScale,
+                    teamId = identity.teamID,
+                    sessionId = identity.sessionId,
                     payload = payload
                 };
                 conn.Send(message);

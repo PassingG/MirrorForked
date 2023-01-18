@@ -79,6 +79,7 @@ namespace Mirror
         public Vector3 scale;
 
         public int teamId;
+        public int sessionId;
 
         // serialized component data
         // ArraySegment to avoid unnecessary allocations

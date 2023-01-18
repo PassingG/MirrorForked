@@ -104,11 +104,17 @@ namespace Mirror
         /// <summary>The unique network Id of this object (unique at runtime).</summary>
         public uint netId { get; internal set; }
 
+
         /// <summary>Unique identifier for NetworkIdentity objects within a scene, used for spawning scene objects.</summary>
         // persistent scene id <sceneHash/32,sceneId/32> (see AssignSceneID comments)
         [FormerlySerializedAs("m_SceneId"), HideInInspector]
         public ulong sceneId;
 
+        [FormerlySerializedAs("m_SessionId"), HideInInspector]
+        public int sessionId;
+
+        [FormerlySerializedAs("m_TeamId"), HideInInspector]
+        public int teamID;
         // assetId used to spawn prefabs across the network.
         // originally a Guid, but a 4 byte uint is sufficient
         // (as suggested by james)
